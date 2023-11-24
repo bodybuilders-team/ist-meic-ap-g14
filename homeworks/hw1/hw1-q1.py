@@ -3,11 +3,14 @@
 # Deep Learning Homework 1
 
 import argparse
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import utils
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 class LinearModel(object):
@@ -26,7 +29,6 @@ class LinearModel(object):
         :param y_i: gold label
         :param kwargs: other arguments are ignored
         """
-        # TODO: implement this function
         raise NotImplementedError
 
     def train_epoch(self, X, y, **kwargs):
@@ -79,8 +81,11 @@ class Perceptron(LinearModel):
         :param kwargs: other arguments are ignored
         """
         # Q1.1a
-        # TODO: implement this function
-        raise NotImplementedError
+        scores = np.dot(self.W, x_i.T)  # vector of scores for each class
+        predicted_label = scores.argmax()  # choose the class with the highest score
+        if predicted_label != y_i:
+            self.W[y_i] += x_i
+            self.W[predicted_label] -= x_i
 
 
 class LogisticRegression(LinearModel):
@@ -97,8 +102,9 @@ class LogisticRegression(LinearModel):
         :param learning_rate: (float) keep it at the default value for your plots
         """
         # Q1.1b
-        # TODO: implement this function
-        raise NotImplementedError
+        scores = np.dot(self.W, x_i.T)
+        softmax = np.exp(scores) / np.sum(np.exp(scores))
+        self.W[y_i] += learning_rate * x_i * (1 - softmax[y_i])
 
 
 class MLP(object):
