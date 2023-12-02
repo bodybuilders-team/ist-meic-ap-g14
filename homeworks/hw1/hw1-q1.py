@@ -85,6 +85,7 @@ class Perceptron(LinearModel):
             self.W[y_hat, :] -= x_i
 
 
+# TODO: Test with different learning rates
 class LogisticRegression(LinearModel):
     """
     Logistic regression model.
@@ -127,8 +128,15 @@ class MLP(object):
     # in main().
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer
-        self.W1 = np.zeros((hidden_size, n_features))  # weights from input to hidden layer (n_hidden x n_features)
-        self.W2 = np.zeros((n_classes, hidden_size))  # weights from hidden to output layer (n_classes x n_hidden)
+        self.W1 = np.random.normal(0.1, 0.1, (
+            hidden_size, n_features))  # weights from input to hidden layer (n_hidden x n_features)
+        self.b1 = np.zeros(hidden_size)  # biases of hidden layer (n_hidden)
+
+        self.W2 = np.random.normal(0.1, 0.1, (n_classes, hidden_size))
+        self.b2 = np.zeros(n_classes)
+
+        self.weights = [self.W1, self.W2]
+        self.biases = [self.b1, self.b2]
 
     def predict(self, X):
         """
@@ -140,11 +148,17 @@ class MLP(object):
         # Compute the forward pass of the network. At prediction time, there is
         # no need to save the values of hidden nodes, whereas this is required
         # at training time.
-        hidden_activations = np.dot(self.W1, X.T)  # (n_hidden x n_examples)
-        hidden_activations = np.maximum(hidden_activations, 0)  # ReLU
+        predicted_labels = []
+        for x_i in X:
+            h0 = x_i
+            z1 = self.W1.dot(h0) + self.b1
+            h1 = np.maximum(z1, 0)
 
-        scores = np.dot(self.W2, hidden_activations)  # (n_classes x n_examples)
-        predicted_labels = scores.argmax(axis=0)
+            z2 = self.W2.dot(h1) + self.b2
+
+            probabilities = np.exp(z2) / np.sum(np.exp(z2))
+            predicted_labels.append(probabilities.argmax())
+
         return predicted_labels
 
     def evaluate(self, X, y):
@@ -170,24 +184,51 @@ class MLP(object):
         :param learning_rate: (float) keep it at the default value for your plots
         :return: loss of the epoch (float).
         """
-        loss = 0
+        total_loss = 0
+
         for x_i, y_i in zip(X, y):
-            # Compute the forward pass of the network
-            hidden_activations = np.maximum(np.dot(self.W1, x_i.T), 0)
-            scores = np.dot(self.W2, hidden_activations)
-            softmax = np.exp(scores) / np.sum(np.exp(scores))
+            # Compute the forward pass
+            h0 = x_i
+            z1 = self.W1.dot(h0) + self.b1
+            h1 = np.maximum(z1, 0)  # ReLU
+
+            z2 = self.W2.dot(h1) + self.b2
+
+            # Subtract the maximum value to avoid overflow
+            max_z2 = np.max(z2)
+            z2 -= max_z2
 
             # Compute the loss
-            loss += -np.log(softmax[y_i])
+            probabilities = np.exp(z2) / np.sum(np.exp(z2))  # TODO: exponential error
+            loss = -np.log(probabilities[y_i])
+            total_loss += loss
 
-            # Compute the backward pass of the network
-            softmax[y_i] -= 1
-            dW2 = np.outer(softmax, hidden_activations)  # the gradient of W2
-            dW1 = np.outer(np.dot(self.W2.T, softmax), x_i)  # the gradient of W1
+            # Compute the backward pass
+            # Gradient of the loss w.r.t. the output layer
+            grad_z2 = probabilities - y_i
+
+            # Gradient of the loss w.r.t. the hidden layer parameters
+            grad_W2 = grad_z2[:, None].dot(h1[:, None].T)
+            grad_b2 = grad_z2
+
+            # Gradient of the loss w.r.t. the hidden layer activations
+            grad_h1 = self.W2.T.dot(grad_z2)
+
+            # Gradient of the loss w.r.t. the hidden layer
+            grad_z1 = grad_h1 * (z1 > 0)  # ReLU
+
+            # Gradient of the loss w.r.t. the hidden layer parameters
+            grad_W1 = grad_z1[:, None].dot(h0[:, None].T)
+            grad_b1 = grad_z1
+
 
             # Update the weights
-            self.W1 -= learning_rate * dW1
-            self.W2 -= learning_rate * dW2
+            self.W1 -= learning_rate * grad_W1
+            self.b1 -= learning_rate * grad_b1
+            self.W2 -= learning_rate * grad_W2
+            self.b2 -= learning_rate * grad_b2
+
+        return total_loss / X.shape[0]
 
 
 def plot(epochs, train_accs, val_accs):
