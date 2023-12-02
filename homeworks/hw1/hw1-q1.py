@@ -3,14 +3,11 @@
 # Deep Learning Homework 1
 
 import argparse
-import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import utils
-
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 class LinearModel(object):
@@ -81,11 +78,11 @@ class Perceptron(LinearModel):
         :param kwargs: other arguments are ignored
         """
         # Q1.1a
-        scores = np.dot(self.W, x_i.T)  # vector of scores for each class
-        predicted_label = scores.argmax()  # choose the class with the highest score
-        if predicted_label != y_i:
-            self.W[y_i] += x_i
-            self.W[predicted_label] -= x_i
+        scores = self.W.dot(x_i.T)  # vector of scores for each class
+        y_hat = scores.argmax()  # choose the class with the highest score
+        if y_hat != y_i:
+            self.W[y_i, :] += x_i  # update the weight vector for the correct class
+            self.W[y_hat, :] -= x_i
 
 
 class LogisticRegression(LinearModel):
@@ -95,16 +92,29 @@ class LogisticRegression(LinearModel):
 
     def update_weight(self, x_i, y_i, learning_rate=0.001):
         """
-        Update the weight vector on a single training example.
+        Update the weight vector on a single training example, using the stochastic gradient descent update rule:
+
+        W_{t+1} = W_t - learning_rate * gradient, where gradient = (y_i - softmax(W_t * x_i)) * x_i
 
         :param x_i: (n_features) a single training example
         :param y_i: the gold label for that example
         :param learning_rate: (float) keep it at the default value for your plots
         """
         # Q1.1b
-        scores = np.dot(self.W, x_i.T)
-        softmax = np.exp(scores) / np.sum(np.exp(scores))
-        self.W[y_i] += learning_rate * x_i * (1 - softmax[y_i])
+        label_scores = np.expand_dims(self.W.dot(x_i.T), axis=1) # (n_classes x 1)
+
+        # One-hot encoding of the gold label
+        y_one_hot = np.zeros(label_scores.shape)
+        y_one_hot[y_i] = 1
+
+        # Softmax
+        probabilities = np.exp(label_scores) / np.sum(np.exp(label_scores))
+
+        # Gradient
+        gradient = (y_one_hot - probabilities) * x_i
+
+        # Update the weights: W_{t+1} = W_t - learning_rate * gradient
+        self.W += learning_rate * gradient
 
 
 class MLP(object):
@@ -116,9 +126,9 @@ class MLP(object):
     # linear models with no changes to the training loop or evaluation code
     # in main().
     def __init__(self, n_classes, n_features, hidden_size):
-        # Initialize an MLP with a single hidden layer.
-        # TODO: implement this function
-        raise NotImplementedError
+        # Initialize an MLP with a single hidden layer
+        self.W1 = np.zeros((hidden_size, n_features))  # weights from input to hidden layer (n_hidden x n_features)
+        self.W2 = np.zeros((n_classes, hidden_size))  # weights from hidden to output layer (n_classes x n_hidden)
 
     def predict(self, X):
         """
@@ -130,8 +140,12 @@ class MLP(object):
         # Compute the forward pass of the network. At prediction time, there is
         # no need to save the values of hidden nodes, whereas this is required
         # at training time.
-        # TODO: implement this function
-        raise NotImplementedError
+        hidden_activations = np.dot(self.W1, X.T)  # (n_hidden x n_examples)
+        hidden_activations = np.maximum(hidden_activations, 0)  # ReLU
+
+        scores = np.dot(self.W2, hidden_activations)  # (n_classes x n_examples)
+        predicted_labels = scores.argmax(axis=0)
+        return predicted_labels
 
     def evaluate(self, X, y):
         """
@@ -156,8 +170,24 @@ class MLP(object):
         :param learning_rate: (float) keep it at the default value for your plots
         :return: loss of the epoch (float).
         """
-        # TODO: implement this function
-        raise NotImplementedError
+        loss = 0
+        for x_i, y_i in zip(X, y):
+            # Compute the forward pass of the network
+            hidden_activations = np.maximum(np.dot(self.W1, x_i.T), 0)
+            scores = np.dot(self.W2, hidden_activations)
+            softmax = np.exp(scores) / np.sum(np.exp(scores))
+
+            # Compute the loss
+            loss += -np.log(softmax[y_i])
+
+            # Compute the backward pass of the network
+            softmax[y_i] -= 1
+            dW2 = np.outer(softmax, hidden_activations)  # the gradient of W2
+            dW1 = np.outer(np.dot(self.W2.T, softmax), x_i)  # the gradient of W1
+
+            # Update the weights
+            self.W1 -= learning_rate * dW1
+            self.W2 -= learning_rate * dW2
 
 
 def plot(epochs, train_accs, val_accs):
