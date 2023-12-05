@@ -128,15 +128,11 @@ class MLP(object):
     # in main().
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer
-        self.W1 = np.random.normal(0.1, 0.1, (
-        hidden_size, n_features))  # weights from input to hidden layer (n_hidden x n_features)
-        self.b1 = np.zeros(hidden_size)  # biases of hidden layer (n_hidden)
+        self.W1 = np.random.normal(0.1, 0.1, (hidden_size, n_features))  # weights from input to hidden layer
+        self.b1 = np.zeros(hidden_size)  # biases of hidden layer
 
         self.W2 = np.random.normal(0.1, 0.1, (n_classes, hidden_size))
         self.b2 = np.zeros(n_classes)
-
-        self.weights = [self.W1, self.W2]
-        self.biases = [self.b1, self.b2]
 
     def predict(self, X):
         """
@@ -156,7 +152,11 @@ class MLP(object):
 
             z2 = self.W2.dot(h1) + self.b2
 
-            probabilities = np.exp(z2) / np.sum(np.exp(z2))
+            # Standardize the scores to avoid overflow
+            z2_standardized = (z2 - np.mean(z2)) / np.std(z2)
+
+            # Softmax
+            probabilities = np.exp(z2_standardized) / np.sum(np.exp(z2_standardized))
             predicted_labels.append(probabilities.argmax())
 
         return predicted_labels
@@ -194,11 +194,13 @@ class MLP(object):
 
             z2 = self.W2.dot(h1) + self.b2
 
-            # Divide by the maximum value to avoid overflow
-            z2 = z2.dot(1 / np.max(z2))
-
             # Compute the loss
-            probabilities = np.exp(z2) / np.sum(np.exp(z2))  # TODO: exponential error
+
+            # Standardize the scores to avoid overflow
+            z2_standardized = (z2 - np.mean(z2)) / np.std(z2)
+
+            # Softmax
+            probabilities = np.exp(z2_standardized) / np.sum(np.exp(z2_standardized))
             loss = -np.log(probabilities[y_i])
             total_loss += loss
 
