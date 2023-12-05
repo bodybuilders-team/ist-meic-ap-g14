@@ -129,7 +129,7 @@ class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer
         self.W1 = np.random.normal(0.1, 0.1, (
-            hidden_size, n_features))  # weights from input to hidden layer (n_hidden x n_features)
+        hidden_size, n_features))  # weights from input to hidden layer (n_hidden x n_features)
         self.b1 = np.zeros(hidden_size)  # biases of hidden layer (n_hidden)
 
         self.W2 = np.random.normal(0.1, 0.1, (n_classes, hidden_size))
@@ -194,9 +194,8 @@ class MLP(object):
 
             z2 = self.W2.dot(h1) + self.b2
 
-            # Subtract the maximum value to avoid overflow
-            max_z2 = np.max(z2)
-            z2 -= max_z2
+            # Divide by the maximum value to avoid overflow
+            z2 = z2.dot(1 / np.max(z2))
 
             # Compute the loss
             probabilities = np.exp(z2) / np.sum(np.exp(z2))  # TODO: exponential error
@@ -231,7 +230,7 @@ class MLP(object):
         return total_loss / X.shape[0]
 
 
-def plot(epochs, train_accs, val_accs):
+def plot(epochs, train_accs, val_accs, filename=None):
     """
     Plot the accuracy curves.
 
@@ -244,10 +243,11 @@ def plot(epochs, train_accs, val_accs):
     plt.plot(epochs, train_accs, label='train')
     plt.plot(epochs, val_accs, label='validation')
     plt.legend()
+    plt.savefig(filename)
     plt.show()
 
 
-def plot_loss(epochs, loss):
+def plot_loss(epochs, loss, filename=None):
     """
     Plot the loss curve.
 
@@ -258,6 +258,7 @@ def plot_loss(epochs, loss):
     plt.ylabel('Loss')
     plt.plot(epochs, loss, label='train')
     plt.legend()
+    plt.savefig(filename)
     plt.show()
 
 
@@ -333,9 +334,10 @@ def main():
     ))
 
     # plot
-    plot(epochs, train_accs, valid_accs)
+    plot(epochs, train_accs, valid_accs,
+         filename=f'images/{opt.model}_accs_{opt.epochs}epochs{"_" + str(opt.learning_rate) + "lr" if opt.model != "perceptron" else ""}.png')
     if opt.model == 'mlp':
-        plot_loss(epochs, train_loss)
+        plot_loss(epochs, train_loss, filename=f'images/{opt.model}_loss_{opt.epochs}.png')
 
 
 if __name__ == '__main__':
