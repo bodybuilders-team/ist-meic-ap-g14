@@ -46,7 +46,7 @@ class LinearModel(object):
         :param X: examples to predict labels for (n_examples x n_features)
         :return: predicted labels (n_examples)
         """
-        scores = np.dot(self.W, X.T)  # (n_classes x n_examples)
+        scores = self.W.dot(X.T)  # (n_classes x n_examples)
         predicted_labels = scores.argmax(axis=0)  # (n_examples)
         return predicted_labels
 
@@ -85,7 +85,6 @@ class Perceptron(LinearModel):
             self.W[y_hat, :] -= x_i
 
 
-# TODO: Test with different learning rates
 class LogisticRegression(LinearModel):
     """
     Logistic regression model.
@@ -128,11 +127,11 @@ class MLP(object):
     # in main().
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer
-        self.W1 = np.random.normal(0.1, 0.1, (hidden_size, n_features))  # weights from input to hidden layer
+        self.W1 = np.random.normal(0.1, 0.1, (hidden_size, n_features))  # input to hidden layer
         self.b1 = np.zeros(hidden_size)  # biases of hidden layer
 
-        self.W2 = np.random.normal(0.1, 0.1, (n_classes, hidden_size))
-        self.b2 = np.zeros(n_classes)
+        self.W2 = np.random.normal(0.1, 0.1, (n_classes, hidden_size))  # hidden to output layer
+        self.b2 = np.zeros(n_classes)  # biases of output layer
 
     def predict(self, X):
         """
@@ -148,15 +147,12 @@ class MLP(object):
         for x_i in X:
             h0 = x_i
             z1 = self.W1.dot(h0) + self.b1
-            h1 = np.maximum(z1, 0)
+            h1 = np.maximum(z1, 0)  # ReLU
 
             z2 = self.W2.dot(h1) + self.b2
 
-            # Standardize the scores to avoid overflow
-            z2_standardized = (z2 - np.mean(z2)) / np.std(z2)
-
             # Softmax
-            probabilities = np.exp(z2_standardized) / np.sum(np.exp(z2_standardized))
+            probabilities = softmax(z2)
             predicted_labels.append(probabilities.argmax())
 
         return predicted_labels
@@ -194,19 +190,18 @@ class MLP(object):
 
             z2 = self.W2.dot(h1) + self.b2
 
-            # Compute the loss
+            # Compute the loss - cross-entropy loss
+            # One-hot encoding of the gold label
+            y = np.zeros(z2.shape)
+            y[y_i] = 1
 
-            # Standardize the scores to avoid overflow
-            z2_standardized = (z2 - np.mean(z2)) / np.std(z2)
-
-            # Softmax
-            probabilities = np.exp(z2_standardized) / np.sum(np.exp(z2_standardized))
-            loss = -np.log(probabilities[y_i])
+            probabilities = softmax(z2)
+            loss = -y.dot(np.log(probabilities + 1e-8))  # add a small constant to avoid log(0)
             total_loss += loss
 
             # Compute the backward pass
             # Gradient of the loss w.r.t. the output layer
-            grad_z2 = probabilities - y_i
+            grad_z2 = probabilities - y
 
             # Gradient of the loss w.r.t. the hidden layer parameters
             grad_W2 = grad_z2[:, None].dot(h1[:, None].T)
@@ -263,6 +258,15 @@ def plot_loss(epochs, loss, filename=None):
     plt.savefig(filename)
     plt.show()
 
+
+def softmax(x):
+    """
+    Compute the softmax of vector x.
+    :param x: vector of scores
+    :return: result of softmax
+    """
+    x = x - np.max(x)  # standardize the scores to avoid overflow
+    return np.exp(x) / np.sum(np.exp(x))
 
 def main():
     parser = argparse.ArgumentParser()
