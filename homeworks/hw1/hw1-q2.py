@@ -33,9 +33,10 @@ class LogisticRegression(nn.Module):
         super().__init__()
         # In a pytorch module, the declarations of layers needs to come after
         # the super __init__ line, otherwise the magic doesn't work.
-        self.beta = nn.Linear(n_features, n_classes)
-        self.beta.bias.data.zero_()
-        self.beta.weight.data.zero_()
+        self.layer = nn.Linear(n_features, n_classes)
+        self.layer.bias.data.zero_()
+        self.layer.weight.data.zero_()
+        self.layer.activation = nn.Softmax(dim=-1)
 
     def forward(self, x, **kwargs):
         """
@@ -53,7 +54,8 @@ class LogisticRegression(nn.Module):
         forward pass -- this is enough for it to figure out how to do the
         backward pass.
         """
-        return self.beta(x)
+        z = self.layer(x)
+        return self.layer.activation(z)
 
 # Q2.2
 class FeedforwardNetwork(nn.Module):
@@ -77,8 +79,33 @@ class FeedforwardNetwork(nn.Module):
         includes modules for several activation functions and dropout as well.
         """
         super().__init__()
-        # TODO: implement this function
-        raise NotImplementedError
+        self.layers = nn.ModuleList()
+
+        # Input layer
+        self.layers.append(nn.Linear(n_features, hidden_size))
+        self.layers.append(nn.Dropout(dropout))
+        if activation_type == "tanh":
+            self.layers.append(nn.Tanh())
+        elif activation_type == "relu":
+            self.layers.append(nn.ReLU())
+        else:
+            raise ValueError(f"Unknown activation type {activation_type}")
+
+        # Hidden layers
+        for _ in range(layers - 1):
+            self.layers.append(nn.Linear(hidden_size, hidden_size))
+            self.layers.append(nn.Dropout(dropout))
+            if activation_type == "tanh":
+                self.layers.append(nn.Tanh())
+            elif activation_type == "relu":
+                self.layers.append(nn.ReLU())
+            else:
+                raise ValueError(f"Unknown activation type {activation_type}")
+
+        # Output layer
+        self.layers.append(nn.Linear(hidden_size, n_classes))
+        self.layers.append(nn.Dropout(dropout))
+        self.layers.append(nn.Softmax(dim=-1))
 
     def forward(self, x, **kwargs):
         """
@@ -90,8 +117,9 @@ class FeedforwardNetwork(nn.Module):
         the output logits from x. This will include using various hidden
         layers, pointwise nonlinear functions, and dropout.
         """
-        # TODO: implement this function
-        raise NotImplementedError
+        for layer in self.layers:
+            x = layer(x)
+        return x
 
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
@@ -192,13 +220,13 @@ def main():
     parser.add_argument('-epochs', default=20, type=int,
                         help="""Number of epochs to train for. You should not
                         need to change this value for your plots.""")
-    parser.add_argument('-batch_size', default=1, type=int,
+    parser.add_argument('-batch_size', default=16, type=int,
                         help="Size of training batch.")
-    parser.add_argument('-learning_rate', type=float, default=0.01)
+    parser.add_argument('-learning_rate', type=float, default=0.1)
     parser.add_argument('-l2_decay', type=float, default=0)
-    parser.add_argument('-hidden_size', type=int, default=100)
-    parser.add_argument('-layers', type=int, default=1)
-    parser.add_argument('-dropout', type=float, default=0.3)
+    parser.add_argument('-hidden_size', type=int, default=200)
+    parser.add_argument('-layers', type=int, default=2)
+    parser.add_argument('-dropout', type=float, default=0.0)
     parser.add_argument('-activation',
                         choices=['tanh', 'relu'], default='relu')
     parser.add_argument('-optimizer',
