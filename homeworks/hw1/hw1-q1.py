@@ -341,7 +341,7 @@ def main():
 
     # plot
     plot(epochs, train_accs, valid_accs,
-         filename=f'images/{opt.model}_accs_{opt.epochs}epochs{"_" + str(opt.learning_rate) + "lr" if opt.model != "perceptron" else ""}.png')
+         filename=f'images/{opt.model}_accs_{opt.epochs}epochs{"_" + str(opt.learning_rate) + "lr" if opt.model != "perceptron" else ""}.pdf')
     if opt.model == 'mlp':
         plot_loss(epochs, train_loss, filename=f'images/{opt.model}_loss_{opt.epochs}.png')
 

@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 
 import utils
 
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Q2.1
 class LogisticRegression(nn.Module):
@@ -32,6 +33,9 @@ class LogisticRegression(nn.Module):
         super().__init__()
         # In a pytorch module, the declarations of layers needs to come after
         # the super __init__ line, otherwise the magic doesn't work.
+        self.beta = nn.Linear(n_features, n_classes)
+        self.beta.bias.data.zero_()
+        self.beta.weight.data.zero_()
 
     def forward(self, x, **kwargs):
         """
@@ -49,9 +53,7 @@ class LogisticRegression(nn.Module):
         forward pass -- this is enough for it to figure out how to do the
         backward pass.
         """
-        # TODO: implement this function
-        raise NotImplementedError
-
+        return self.beta(x)
 
 # Q2.2
 class FeedforwardNetwork(nn.Module):
@@ -102,6 +104,8 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     :param optimizer: optimizer used in gradient step
     :param criterion: loss function
 
+    :return: loss (float)
+
     To train a batch, the model needs to predict outputs for X, compute the
     loss between these predictions and the "gold" labels y using the criterion,
     and compute the gradient of the loss with respect to the model parameters.
@@ -112,7 +116,18 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     This function should return the loss (tip: call loss.item()) to get the
     loss as a numerical value that is not part of the computation graph.
     """
-    raise NotImplementedError
+    model.train()
+
+    optimizer.zero_grad()  # Set gradients to zero
+
+    # Forward pass
+    logits = model(X)
+    loss = criterion(logits, y)
+
+    # Backward pass
+    loss.backward()  # Compute gradients
+    optimizer.step()  # Update weights using gradients
+    return loss.item()
 
 
 def predict(model, X):
@@ -166,7 +181,7 @@ def plot(epochs, plottables, name='', ylim=None):
     plt.legend()
     if ylim:
         plt.ylim(ylim)
-    plt.savefig('%s.pdf' % (name), bbox_inches='tight')
+    plt.savefig("images/" + '%s.pdf' % (name), bbox_inches='tight')
 
 
 def main():
