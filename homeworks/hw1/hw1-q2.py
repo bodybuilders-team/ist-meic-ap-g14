@@ -36,7 +36,6 @@ class LogisticRegression(nn.Module):
         self.layer = nn.Linear(n_features, n_classes)
         self.layer.bias.data.zero_()
         self.layer.weight.data.zero_()
-        self.layer.activation = nn.Softmax(dim=-1)
 
     def forward(self, x, **kwargs):
         """
@@ -83,29 +82,27 @@ class FeedforwardNetwork(nn.Module):
 
         # Input layer
         self.layers.append(nn.Linear(n_features, hidden_size))
-        self.layers.append(nn.Dropout(dropout))
         if activation_type == "tanh":
             self.layers.append(nn.Tanh())
         elif activation_type == "relu":
             self.layers.append(nn.ReLU())
         else:
             raise ValueError(f"Unknown activation type {activation_type}")
+        self.layers.append(nn.Dropout(dropout))
 
         # Hidden layers
         for _ in range(layers - 1):
             self.layers.append(nn.Linear(hidden_size, hidden_size))
-            self.layers.append(nn.Dropout(dropout))
             if activation_type == "tanh":
                 self.layers.append(nn.Tanh())
             elif activation_type == "relu":
                 self.layers.append(nn.ReLU())
             else:
                 raise ValueError(f"Unknown activation type {activation_type}")
+            self.layers.append(nn.Dropout(dropout))
 
         # Output layer
         self.layers.append(nn.Linear(hidden_size, n_classes))
-        self.layers.append(nn.Dropout(dropout))
-        self.layers.append(nn.Softmax(dim=-1))
 
     def forward(self, x, **kwargs):
         """
