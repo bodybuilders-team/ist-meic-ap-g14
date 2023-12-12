@@ -21,8 +21,10 @@ class LogisticRegression(nn.Module):
 
     def __init__(self, n_classes, n_features, **kwargs):
         """
-        n_classes (int)
-        n_features (int)
+        Initialize a logistic regression model.
+
+        :param n_classes: number of classes
+        :param n_features: number of features
 
         The __init__ should be used to declare what kind of layers and other
         parameters the module has. For example, a logistic regression module
@@ -37,11 +39,12 @@ class LogisticRegression(nn.Module):
         self.layer.bias.data.zero_()
         self.layer.weight.data.zero_()
 
-    def forward(self, x, **kwargs):
+    def forward(self, x):
         """
         Forward pass of the logistic regression model.
 
         :param x: input tensor of shape (batch_size x n_features)
+        :return: output tensor of shape (batch_size x n_classes)
 
         Every subclass of nn.Module needs to have a forward() method. forward()
         describes how the module computes the forward pass. In a log-lineear
@@ -62,16 +65,16 @@ class FeedforwardNetwork(nn.Module):
     Feedforward network with a single hidden layer.
     """
 
-    def __init__(
-            self, n_classes, n_features, hidden_size, layers,
-            activation_type, dropout, **kwargs):
+    def __init__(self, n_classes, n_features, hidden_size, layers, activation_type, dropout):
         """
-        n_classes (int)
-        n_features (int)
-        hidden_size (int)
-        layers (int)
-        activation_type (str)
-        dropout (float): dropout probability
+        Initialize a feedforward network.
+
+        :param n_classes: number of classes
+        :param n_features: number of features
+        :param hidden_size: number of hidden units
+        :param layers: number of layers
+        :param activation_type: activation function type
+        :param dropout: dropout probability
 
         As in logistic regression, the __init__ here defines a bunch of
         attributes that each FeedforwardNetwork instance has. Note that nn
@@ -104,22 +107,23 @@ class FeedforwardNetwork(nn.Module):
         # Output layer
         self.layers.append(nn.Linear(hidden_size, n_classes))
 
-    def forward(self, x, **kwargs):
+    def forward(self, x):
         """
         Forward pass of the feedforward network.
 
         :param x: input tensor of shape (batch_size x n_features)
+        :return: output tensor of shape (batch_size x n_classes)
 
         This method needs to perform all the computation needed to compute
         the output logits from x. This will include using various hidden
-        layers, pointwise nonlinear functions, and dropout.
+        layers, point-wise nonlinear functions, and dropout.
         """
         for layer in self.layers:
             x = layer(x)
         return x
 
 
-def train_batch(X, y, model, optimizer, criterion, **kwargs):
+def train_batch(X, y, model, optimizer, criterion):
     """
     Train the model on a single batch of examples.
 
@@ -177,6 +181,8 @@ def evaluate(model, X, y, criterion):
     :param X: input tensor of shape (n_examples x n_features)
     :param y: label tensor of shape (n_examples)
     :param criterion: loss function
+
+    :return: loss (float), accuracy (float)
     """
     model.eval()
     logits = model(X)

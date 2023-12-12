@@ -70,7 +70,9 @@ class ClassificationDataset(torch.utils.data.Dataset):
 
     def __init__(self, data):
         """
-        data: the dict returned by utils.load_pneumonia_data
+        Initializes the dataset.
+
+        :param data: the dict returned by utils.load_oct_data
         """
         train_X, train_y = data["train"]
         dev_X, dev_y = data["dev"]

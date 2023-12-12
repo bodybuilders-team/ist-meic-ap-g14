@@ -16,6 +16,12 @@ class LinearModel(object):
     """
 
     def __init__(self, n_classes, n_features):
+        """
+        Initialize a linear model.
+
+        :param n_classes: number of classes
+        :param n_features: number of features
+        """
         self.W = np.zeros((n_classes, n_features))
 
     def update_weight(self, x_i, y_i, **kwargs):
@@ -24,7 +30,7 @@ class LinearModel(object):
 
         :param x_i: training example
         :param y_i: gold label
-        :param kwargs: other arguments are ignored
+        :param kwargs: other arguments (e.g. learning rate)
         """
         raise NotImplementedError
 
@@ -34,7 +40,7 @@ class LinearModel(object):
 
         :param X: training examples
         :param y: gold labels
-        :param kwargs: other arguments are ignored
+        :param kwargs: other arguments (e.g. learning rate)
         """
         for x_i, y_i in zip(X, y):
             self.update_weight(x_i, y_i, **kwargs)
@@ -101,7 +107,7 @@ class LogisticRegression(LinearModel):
         :param learning_rate: (float) keep it at the default value for your plots
         """
         # Q1.1b
-        label_scores = np.expand_dims(self.W.dot(x_i.T), axis=1) # (n_classes x 1)
+        label_scores = np.expand_dims(self.W.dot(x_i.T), axis=1)  # (n_classes x 1)
 
         # One-hot encoding of the gold label
         y_one_hot = np.zeros(label_scores.shape)
@@ -122,11 +128,14 @@ class MLP(object):
     Multi-layer perceptron model.
     """
 
-    # Q3.2b. This MLP skeleton code allows the MLP to be used in place of the
-    # linear models with no changes to the training loop or evaluation code
-    # in main().
     def __init__(self, n_classes, n_features, hidden_size):
-        # Initialize an MLP with a single hidden layer
+        """
+        Initialize an MLP with a single hidden layer.
+
+        :param n_classes: number of classes
+        :param n_features:  number of features
+        :param hidden_size: number of hidden units
+        """
         self.W1 = np.random.normal(0.1, 0.1, (hidden_size, n_features))  # input to hidden layer
         self.b1 = np.zeros(hidden_size)  # biases of hidden layer
 
@@ -217,7 +226,6 @@ class MLP(object):
             grad_W1 = grad_z1[:, None].dot(h0[:, None].T)
             grad_b1 = grad_z1
 
-
             # Update the weights
             self.W1 -= learning_rate * grad_W1
             self.b1 -= learning_rate * grad_b1
@@ -234,6 +242,7 @@ def plot(epochs, train_accs, val_accs, filename=None):
     :param epochs: array of epoch numbers
     :param train_accs: array of training accuracies
     :param val_accs: array of validation accuracies
+    :param filename: filename to save the plot
     """
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
@@ -250,6 +259,7 @@ def plot_loss(epochs, loss, filename=None):
 
     :param epochs: array of epoch numbers
     :param loss: array of training losses
+    :param filename: filename to save the plot
     """
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
@@ -267,6 +277,7 @@ def softmax(x):
     """
     x = x - np.max(x)  # standardize the scores to avoid overflow
     return np.exp(x) / np.sum(np.exp(x))
+
 
 def main():
     parser = argparse.ArgumentParser()
