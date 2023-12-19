@@ -21,21 +21,21 @@ def configure_seed(seed):
         torch.backends.cudnn.benchmark = False
 
 
-def load_oct_data(bias=False, eq_test_dist=False, root="."):
+def load_oct_data(bias=False, eq_test_dist=False):
     """
     Loads the preprocessed, featurized octmnist dataset, optionally adding a bias feature.
 
     :param bias: whether to add a bias feature
     :param eq_test_dist: whether to equalize the test distribution
-    :param root: the root directory of the dataset
     :return: a dictionary containing the training, development, and test sets
     """
-    path = os.path.join(root, "octmnist.npz")
-    data = np.load(path)
+    data = np.load('octmnist.npz')
     train_X = data["train_images"].reshape([data["train_images"].shape[0], -1]) / 256
     dev_X = data["val_images"].reshape([data["val_images"].shape[0], -1]) / 256
     test_X = data["test_images"].reshape([data["test_images"].shape[0], -1]) / 256
 
+    train_y = np.asarray(data["train_labels"]).squeeze()
+    val_y = np.asarray(data["val_labels"]).squeeze()
     test_y = np.asarray(data["test_labels"]).squeeze()
     if not eq_test_dist:
         test_y_class0 = test_y[test_y == 0][0:182]  # 182
@@ -60,7 +60,7 @@ def load_oct_data(bias=False, eq_test_dist=False, root="."):
         test_X = np.hstack((test_X, np.ones((test_X.shape[0], 1))))
     return {"train": (train_X, np.asarray(data["train_labels"]).squeeze()),
             "dev": (dev_X, np.asarray(data["val_labels"]).squeeze()),
-            "test": (test_X, test_y)}
+            "test": (test_X, test_y)}  # np.asarray(data["test_labels"]).squeeze())}
 
 
 class ClassificationDataset(torch.utils.data.Dataset):
@@ -78,13 +78,13 @@ class ClassificationDataset(torch.utils.data.Dataset):
         dev_X, dev_y = data["dev"]
         test_X, test_y = data["test"]
 
-        self.X = torch.tensor(train_X, dtype=torch.float32)
+        self.X = torch.tensor(train_X.reshape(-1, 1, 28, 28), dtype=torch.float32)
         self.y = torch.tensor(train_y, dtype=torch.long)
 
-        self.dev_X = torch.tensor(dev_X, dtype=torch.float32)
+        self.dev_X = torch.tensor(dev_X.reshape(-1, 1, 28, 28), dtype=torch.float32)
         self.dev_y = torch.tensor(dev_y, dtype=torch.long)
 
-        self.test_X = torch.tensor(test_X, dtype=torch.float32)
+        self.test_X = torch.tensor(test_X.reshape(-1, 1, 28, 28), dtype=torch.float32)
         self.test_y = torch.tensor(test_y, dtype=torch.long)
 
     def __len__(self):

@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 
 import utils
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class CNN(nn.Module):
     """
@@ -28,15 +29,23 @@ class CNN(nn.Module):
         """
         super(CNN, self).__init__()
         self.no_maxpool = no_maxpool
+        self.dropout_prob = dropout_prob
         if not no_maxpool:
             # Implementation for Q2.1
-            raise NotImplementedError
+            # CNNs
+            self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1)
+            self.conv2 = nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=0)
         else:
             # Implementation for Q2.2
-            raise NotImplementedError
+            # CNNs
+            self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=2, padding=1)
+            self.conv2 = nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=0)
 
         # Implementation for Q2.1 and Q2.2
-        raise NotImplementedError
+        # Affine layers - fully connected linear layers
+        self.fc1 = nn.Linear(in_features=16 * 6 * 6, out_features=320)
+        self.fc2 = nn.Linear(in_features=320, out_features=120)
+        self.fc3 = nn.Linear(in_features=120, out_features=4)  # 4 classes
 
     def forward(self, x):
         """
@@ -47,23 +56,28 @@ class CNN(nn.Module):
         """
         # input should be of shape [b, c, w, h]
         # conv and relu layers
+        x = F.relu(self.conv1(x))
 
         # max-pool layer if using it
         if not self.no_maxpool:
-            raise NotImplementedError
+            x = F.max_pool2d(x, kernel_size=2, stride=2)
 
         # conv and relu layers
+        x = F.relu(self.conv2(x))
 
         # max-pool layer if using it
         if not self.no_maxpool:
-            raise NotImplementedError
+            x = F.max_pool2d(x, kernel_size=2, stride=2)
 
         # prep for fully connected layer + relu
+        x = x.view(x.shape[0], -1)  # flatten
+        x = F.relu(self.fc1(x))
 
         # drop out
-        x = self.drop(x)
+        x = F.dropout(x, p=self.dropout_prob)
 
         # second fully connected layer + relu
+        x = F.relu(self.fc2(x))
 
         # last fully connected layer
         x = self.fc3(x)
@@ -83,6 +97,8 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
 
         :return: loss (float)
     """
+    X.to(device)
+    y.to(device)
     optimizer.zero_grad()
     out = model(X, **kwargs)
     loss = criterion(out, y)
@@ -135,7 +151,7 @@ def plot(epochs, plottable, ylabel='', name=''):
     plt.xlabel('Epoch')
     plt.ylabel(ylabel)
     plt.plot(epochs, plottable)
-    plt.savefig('%s.pdf' % (name), bbox_inches='tight')
+    plt.savefig("images/" + '%s.pdf' % (name), bbox_inches='tight')
 
 
 def get_number_trainable_params(model):
@@ -145,8 +161,8 @@ def get_number_trainable_params(model):
     :param model: a PyTorch defined model
     :return: number of trainable parameters (int)
     """
-    ## TO IMPLEMENT - REPLACE return 0
-    return 0
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    return sum([np.prod(p.size()) for p in model_parameters])
 
 
 def main():
@@ -170,13 +186,12 @@ def main():
 
     data = utils.load_oct_data()
     dataset = utils.ClassificationDataset(data)
-    train_dataloader = DataLoader(
-        dataset, batch_size=opt.batch_size, shuffle=True)
+    train_dataloader = DataLoader(dataset, batch_size=opt.batch_size, shuffle=True)
     dev_X, dev_y = dataset.dev_X, dataset.dev_y
     test_X, test_y = dataset.test_X, dataset.test_y
 
     # initialize the model
-    model = CNN(opt.dropout, no_maxpool=opt.no_maxpool)
+    model = CNN(opt.dropout, no_maxpool=opt.no_maxpool).to(device)
 
     # get an optimizer
     optims = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
@@ -197,8 +212,7 @@ def main():
     for ii in epochs:
         print('Training epoch {}'.format(ii))
         for X_batch, y_batch in train_dataloader:
-            loss = train_batch(
-                X_batch, y_batch, model, optimizer, criterion)
+            loss = train_batch(X_batch, y_batch, model, optimizer, criterion)
             train_losses.append(loss)
 
         mean_loss = torch.tensor(train_losses).mean().item()
