@@ -282,11 +282,11 @@ Final Test acc: 0.7013
 Number of trainable parameters:  224892
 [0mRunning Question 2.1 ...
 
-Time taken for learning rate 0.1: 419.5567479133606 seconds
-Time taken for learning rate 0.01: 408.46084666252136 seconds
-Time taken for learning rate 0.001: 405.5984401702881 seconds
+Time taken for learning rate 0.1: 435.16318249702454 seconds
+Time taken for learning rate 0.01: 411.3567705154419 seconds
+Time taken for learning rate 0.001: 437.8452527523041 seconds
 Running Question 2.2 ...
 
-Time taken for learning rate 0.1: 312.29272651672363 seconds
-Time taken for learning rate 0.01: 364.2114996910095 seconds
-Time taken for learning rate 0.001: 396.0980350971222 seconds
+Time taken for learning rate 0.1: 344.4386250972748 seconds
+Time taken for learning rate 0.01: 333.2421181201935 seconds
+Time taken for learning rate 0.001: 369.07661271095276 seconds

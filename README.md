@@ -21,14 +21,16 @@ conda activate IST_DL21_Env
 3. [Lab 3](./labs/practical_03.ipynb) - Linear and Logistic Regression
 4. [Lab 4](./labs/practical_04.ipynb) - Multilayer Perceptron
 5. [Lab 5](./labs/practical_05_1.ipynb) - PyTorch
-6. [Lab 6](./labs/practical_05_2.ipynb) - Convolutional Neural Networks _(coming soon)_
+6. [Lab 6](./labs/practical_06.ipynb) - Convolutional Neural Networks
+7. [Lab 7](./labs/practical_07.ipynb) - Recurrent Neural Networks
+8. [Lab 8](./labs/practical_08.ipynb) - Attention Mechanisms _coming soon_
 
 ---
 
 ## Homeworks
 
 1. [Homework 1](./homeworks/hw1) - Perceptron, Logistic Regression and Multilayer Perceptron
-2. [Homework 2](./homeworks/hw2) - _coming soon_
+2. [Homework 2](./homeworks/hw2) - CNNs, RNNs, Attention and Transformers
 
 ---
 

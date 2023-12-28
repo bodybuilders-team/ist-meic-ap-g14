@@ -78,13 +78,13 @@ class ClassificationDataset(torch.utils.data.Dataset):
         dev_X, dev_y = data["dev"]
         test_X, test_y = data["test"]
 
-        self.X = torch.tensor(train_X.reshape(-1, 1, 28, 28), dtype=torch.float32)
+        self.X = torch.tensor(train_X.reshape(train_X.shape[0], 1, 28, 28), dtype=torch.float32)
         self.y = torch.tensor(train_y, dtype=torch.long)
 
-        self.dev_X = torch.tensor(dev_X.reshape(-1, 1, 28, 28), dtype=torch.float32)
+        self.dev_X = torch.tensor(dev_X.reshape(dev_X.shape[0], 1, 28, 28), dtype=torch.float32)
         self.dev_y = torch.tensor(dev_y, dtype=torch.long)
 
-        self.test_X = torch.tensor(test_X.reshape(-1, 1, 28, 28), dtype=torch.float32)
+        self.test_X = torch.tensor(test_X.reshape(test_X.shape[0], 1, 28, 28), dtype=torch.float32)
         self.test_y = torch.tensor(test_y, dtype=torch.long)
 
     def __len__(self):
