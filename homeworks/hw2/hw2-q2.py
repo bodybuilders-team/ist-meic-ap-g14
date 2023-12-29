@@ -33,7 +33,7 @@ class CNN(nn.Module):
         if not no_maxpool:
             # Implementation for Q2.1
             # CNNs
-            self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1)
+            self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1) # Padding = (kernel_size - 1)/2 = (3-1)/2 = 1
             self.conv2 = nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=0)
         else:
             # Implementation for Q2.2
